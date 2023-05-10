@@ -1,0 +1,159 @@
+
+https://github.com/spring-cloud/spring-cloud-stream-binder-kafka/issues/961
+      kafka:
+        streams: <<<<<<<<<<<<<<<<<<<<<<<
+          binder:
+            brokers: ${KAFKA_SERVERS:localhost:9092}
+            configuration:
+              metadata.max.age.ms: 6000
+              auto.offset.reset: earliest
+
+This works fine:
+
+@SpringBootApplication
+@EnableBinding(Sink.class)
+public class Kbgh961Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(Kbgh961Application.class, args);
+	}
+
+	@StreamListener(Sink.INPUT)
+	public void listen(String in) {
+		System.out.println(in);
+	}
+
+}
+
+spring.cloud.stream.bindings.input.destination=.*foo
+spring.cloud.stream.kafka.bindings.input.consumer.destination-is-pattern=true
+
+spring.cloud.stream.kafka.binder.configuration.metadata.max.age.ms=30000
+
+
+  cloud:
+    stream:
+      bindings:
+        input:
+          destination: .*foo
+      kafka:
+        binder:
+          configuration:
+            metadata:
+              max:
+                age:
+                  ms: 30000
+                  
+                  
+                  
+                  
+                  @SpringBootApplication
+public class Kbgh961Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(Kbgh961Application.class, args);
+	}
+
+	@Bean
+	public Consumer<KStream<byte[], byte[]>> stream() {
+		return in -> in.foreach((k, v) -> System.out.println(new String(v)));
+	}
+
+}
+
+spring:
+  application:
+    name: kbgh961s
+  kafka:
+    streams:
+      properties:
+        metadata.max.age.ms: 30000
+  cloud:
+    function:
+      definition: stream
+    stream:
+      bindings:
+        stream-in-0:
+          destination: .*foo
+        streams:
+          bindings:
+            stream-in-0:
+              consumer:
+                destination-is-pattern: true
+                
+                
+                Actually, it works at the binder level too:
+
+spring:
+  application:
+    name: kbgh961s
+  cloud:
+    function:
+      definition: stream
+    stream:
+      bindings:
+        stream-in-0:
+          destination: .*foo
+      kafka:
+        streams:
+          binder:
+            configuration:
+              metadata.max.age.ms: 30000
+          bindings:
+            stream-in-0:
+              consumer:
+                destination-is-pattern: true
+                
+                
+                
+                I am using spring-cloud-stream-binder-kafka-streams 3.0.8.RELEASE, kafka-streams 2.5.1 with a 2.6.0 broker.
+                
+                
+                
+                
+                
+                
+-------------------------------------------------------------
+application.yml
+spring:
+  cloud:
+    function:
+      definition: stream
+    stream:
+      bindings:
+        stream-in-0:
+          destination: .*foo
+      kafka:
+        streams:
+          binder:
+            configuration:
+              metadata.max.age.ms: 30000
+          bindings:
+            stream-in-0:
+              consumer:
+                destination-is-pattern: true      
+                
+                
+ackage com.example.demo;
+
+import java.util.function.Consumer;
+
+import org.apache.kafka.streams.kstream.KStream;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+@SpringBootApplication
+public class KafkaStreamsDestinationPatternApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(KafkaStreamsDestinationPatternApplication.class, args);
+	}
+
+	@Bean
+	public Consumer<KStream<String, String>> stream() {
+		return in -> in.foreach((k, v) -> System.out.println("Got this record: " + v));
+	}
+
+}                          
